@@ -37,6 +37,9 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'franchises',
+    'rest_framework',
+    'nested_admin',
 ]
 
 MIDDLEWARE = [
