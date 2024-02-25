@@ -20,5 +20,9 @@ from django.urls import path,include
 urlpatterns = [
     path('_nested_admin/', include('nested_admin.urls')),
     path('admin/', admin.site.urls),
-    path('',include('franchises.urls'))
+    # path('',include('franchise.urls'))
 ]
+
+admin.site.site_header = "TechRest Admin"
+admin.site.site_title = "TechRest Admin Portal"
+admin.site.index_title = "Welcome to TechRest Admin"
