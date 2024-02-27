@@ -20,7 +20,7 @@ from django.urls import path,include
 urlpatterns = [
     path('_nested_admin/', include('nested_admin.urls')),
     path('admin/', admin.site.urls),
-    # path('',include('franchise.urls'))
+    path('',include('franchise.urls'))
 ]
 
 admin.site.site_header = "TechRest Admin"

@@ -8,30 +8,31 @@ class Franchise(models.Model):
     owner = models.ForeignKey(User, on_delete=models.CASCADE)
     opening_hours = models.CharField(max_length=30)
     is_vegiterian = models.BooleanField(default=True)
+    slug = models.SlugField(unique=True,null=True)
     
     def __str__(self):
         return self.name
-    
+
 class Outlet(models.Model):
     franchise = models.ForeignKey(Franchise, on_delete=models.CASCADE)
     name = models.CharField(max_length=30)
     address = models.CharField(max_length=100)
     manager = models.ForeignKey(User, on_delete=models.CASCADE)
     phone_number = models.CharField(max_length=20)
+    slug = models.SlugField(unique=True,null=True)
     outlet_license = models.FileField(upload_to="outlet_license")
     photo = models.ImageField(upload_to= "outlet_photo")
     code = models.CharField(max_length=20)
-    no_of_employees = models.IntegerField()    
-     
+    no_of_employees = models.IntegerField()
+
     def __str__(self):
         return self.name
 
 class Table(models.Model):
     table_number = models.IntegerField(null=True)
     outlet = models.ForeignKey(Outlet, on_delete=models.CASCADE)
-    status = models.BooleanField(default=True)
     capacity = models.IntegerField()
-    category = models.CharField(max_length=50,choices=(("INDOOR","INDOOR"),("OUTDOOR","OUTDOOR")))
+    category = models.CharField(max_length=50,choices=(("IN","INDOOR"),("OU","OUTDOOR"),('MZ','MEZZANINE')))
     is_reserved = models.BooleanField(default=False)
     
 class Menu(models.Model):

@@ -26,9 +26,11 @@ class OutletAdmin(NestedModelAdmin):
 
 class FranchiseAdmin(NestedModelAdmin):
     inlines = [OutletInline,MenuInline]
+    list_display = ['id','name']
 
 
 admin.site.register(Franchise,FranchiseAdmin)
 admin.site.register(Outlet,OutletAdmin)
 admin.site.register(Table)
 admin.site.register(Menu)
+admin.site.register(Order)
