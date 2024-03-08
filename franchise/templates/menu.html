@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Menu</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f8fcf8;
+            color: #333;
+        }
+
+        h1, h2, h3 {
+            color: #69a769;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 0 20px;
+        }
+
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        li {
+            margin-bottom: 10px;
+        }
+
+        form input[type="number"] {
+            width: 60px;
+            margin-right: 10px;
+        }
+
+        button {
+            background-color: #69a769;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #4b7e4b;
+        }
+
+        .kot {
+            background-color: #e6f0e6;
+            padding: 10px;
+            margin-bottom: 20px;
+        }
+
+        .kot h3 {
+            margin-top: 0;
+        }
+
+        .served {
+            color: #888;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Menu Table number {{table.id}}</h1>
+        <ul>
+            <form action="{% url 'place_order' franchise_slug=table.outlet.franchise.slug outlet_slug=table.outlet.slug table_id=table.id %}" method="post">
+                {% csrf_token %}
+                {% for item in menu_items %}
+                    <li>
+                        <input type="hidden" name="item_ids" value="{{ item.id }}">
+                        <label for="quantity_{{ item.id }}">{{ item.name }} - ₹{{ item.price }}</label>
+                        <input type="number" name="quantity_{{ item.id }}" id="quantity_{{ item.id }}" value="0" min="0">
+                    </li>
+                {% endfor %}
+                <button type="submit">Place Order</button>
+            </form>
+        </ul>
+
+        <h2>Kitchen Order Tickets</h2>
+        {% for kot in table.kitchenorderticket_set.all %}
+            <div class="kot">
+                <h3>KOT {{ kot.kot_number }} {% if kot.is_served %}<span class="served">(Served)</span>{% endif %}</h3>
+                <ul>
+                    {% for order in kot.orders.all %}
+                        <li>{{ order.item.name }} - Quantity: {{ order.quantity }}</li>
+                    {% endfor %}
+                </ul>
+                {% if not kot.is_served %}
+                    <form action="{% url 'serve_kot' kot_id=kot.id %}" method="post">
+                        {% csrf_token %}
+                        <button type="submit">Serve KOT</button>
+                    </form>
+                {% endif %}
+            </div>
+        {% endfor %}
+    </div>
+</body>
+</html>

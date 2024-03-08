@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-time Orders</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tailwind CSS Example</title>
+    <!-- Include Tailwind CSS -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
+      rel="stylesheet"
+    />
+    <!-- Include Flowbite CSS -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/flowbite@latest/dist/flowbite.css"
+      rel="stylesheet"
+    />
+    <!-- Include Material Tailwind CSS -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/material-tailwind/dist/material-tailwind.min.css"
+      rel="stylesheet"
+    />
+    
+    <script src="https://unpkg.com/@material-tailwind/html@latest/scripts/script-name.js"></script>
+</head>
+<body class="bg-gray-100">
+    <h1>Real-time Orders for {{ franchise }} - {{ outlet }}</h1>
+  <body >
+  {% include "aside_bar.html" %}
+
+    
+
+    <div class="p-4 sm:ml-64">
+      <div
+        class="relative flex flex-col w-full h-full text-gray-700 bg-white shadow-md rounded-xl bg-clip-border"
+      >
+        <div
+          class="relative mx-4 mt-4 overflow-hidden text-gray-700 bg-white rounded-none bg-clip-border"
+        >
+          <div
+            class="flex flex-col justify-between gap-8 mb-4 md:flex-row md:items-center"
+          >
+            <div>
+              <h5
+                class="block font-sans text-xl antialiased font-semibold leading-snug tracking-normal text-blue-gray-900"
+              >
+                Recent Orders
+              </h5>
+            </div>
+          </div>
+        </div>
+        <div class="p-0 px-0 overflow-scroll">
+          <table class="w-full text-left table-auto min-w-max">
+            <thead class="bg-gray-100">
+              <tr>
+                <th
+                  class="p-4 border-y border-blue-gray-100 bg-blue-gray-50/50"
+                >
+                  <p
+                    class="block font-sans text-sm antialiased font-normal leading-none text-blue-gray-900 opacity-70"
+                  >
+                    Name
+                  </p>
+                </th>
+                <th
+                  class="p-4 border-y border-blue-gray-100 bg-blue-gray-50/50"
+                >
+                  <p
+                    class="block font-sans text-sm antialiased font-normal leading-none text-blue-gray-900 opacity-70"
+                  >
+                    Quantity
+                  </p>
+                </th>
+                <th
+                  class="p-4 border-y border-blue-gray-100 bg-blue-gray-50/50"
+                >
+                  <p
+                    class="block font-sans text-sm antialiased font-normal leading-none text-blue-gray-900 opacity-70"
+                  >
+                    Time
+                  </p>
+                </th>
+                <th
+                  class="p-4 border-y border-blue-gray-100 bg-blue-gray-50/50"
+                >
+                  <p
+                    class="block font-sans text-sm antialiased font-normal leading-none text-blue-gray-900 opacity-70"
+                  >
+                    Action
+                  </p>
+                </th>
+              </tr>
+            </thead>
+            <tbody id="orders-container">
+                <tr>
+                <td class="p-4 border-b border-blue-gray-50">
+                  <div class="flex items-center gap-3">
+                    <p
+                      class="block font-sans text-sm antialiased font-bold leading-normal text-blue-gray-900"
+                    >
+                      Spotify
+                    </p>
+                  </div>
+                </td>
+                <td class="p-4 border-b border-blue-gray-50">
+                  <p
+                    class="block font-sans text-sm antialiased font-normal leading-normal text-blue-gray-900"
+                  >
+                    $2,500
+                  </p>
+                </td>
+                <td class="p-4 border-b border-blue-gray-50">
+                  <p
+                    class="block font-sans text-sm antialiased font-normal leading-normal text-blue-gray-900"
+                  >
+                    Wed 3:00pm
+                  </p>
+                </td>
+                <td class="p-4 border-b border-blue-gray-50">
+                  <div class="w-max">
+                    <div
+                      class="relative grid items-center px-2 py-1 font-sans text-xs font-bold text-green-900 uppercase rounded-md select-none whitespace-nowrap bg-green-500/20"
+                    >
+                      <button
+                        class="bg-green-500 rounded p-2 text-base text-white"
+                      >
+                        Served
+                      </button>
+                    </div>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <script>
+        const wsScheme = window.location.protocol === "https:" ? "wss" : "ws";
+        const socket = new WebSocket(
+            wsScheme+'://' + window.location.host +
+            '/ws/{{ franchise }}/{{ outlet }}/'
+        );
+        
+        socket.onopen = function(event) {
+            console.log('WebSocket connection established.');
+        };
+
+        socket.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            const orderDetails = data.order;
+            order = JSON.parse(orderDetails)
+            
+
+            const ordersContainer = document.getElementById('orders-container');
+            for (let i=0; i< order.length;i++){
+            ordersContainer.innerHTML += `<tr>
+              <td class="p-4 border-b border-blue-gray-50">
+                <div class="flex items-center gap-3">
+                  <p
+                    class="block font-sans text-sm antialiased font-bold leading-normal text-blue-gray-900"
+                  >
+                    ${order[i].item_name}
+                  </p>
+                </div>
+              </td>
+              <td class="p-4 border-b border-blue-gray-50">
+                <p
+                  class="block font-sans text-sm antialiased font-normal leading-normal text-blue-gray-900"
+                >
+                  ${order[i].quantity}
+                </p>
+              </td>
+              <td class="p-4 border-b border-blue-gray-50">
+                <p
+                  class="block font-sans text-sm antialiased font-normal leading-normal text-blue-gray-900"
+                >
+                  Wed 3:00pm
+                </p>
+              </td>
+              <td class="p-4 border-b border-blue-gray-50">
+                <div class="w-max">
+                  <div
+                    class="relative grid items-center px-2 py-1 font-sans text-xs font-bold text-green-900 uppercase rounded-md select-none whitespace-nowrap bg-green-500/20"
+                  >
+                    <button
+                      class="bg-green-500 rounded p-2 text-base text-white"
+                    >
+                      Served
+                    </button>
+                  </div>
+                </div>
+              </td>
+            </tr>`;
+            }
+          };
+            socket.onclose = function(event) {
+            console.log('WebSocket connection closed.');
+        };
+    </script>
+</body>
+</html>
+
+
+          

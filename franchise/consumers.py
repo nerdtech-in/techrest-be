@@ -1,28 +1,47 @@
+# consumers.py
+
 from channels.generic.websocket import AsyncWebsocketConsumer
-from channels.generic.websocket import WebsocketConsumer
 import json
 
-
-class AdminPanelConsumer(AsyncWebsocketConsumer):
+class FranchiseOutletConsumer(AsyncWebsocketConsumer):
     async def connect(self):
-        await self.channel_layer.group_add("admin_panel_group", self.channel_name)
+        self.franchise = self.scope['url_route']['kwargs']['franchise']
+        self.outlet = self.scope['url_route']['kwargs']['outlet']
+        self.room_group_name = f'{self.franchise}_{self.outlet}'
+        print(self.room_group_name)
+        
+        # Join the room
+        await self.channel_layer.group_add(
+            self.room_group_name,
+            self.channel_name
+        )
+
         await self.accept()
 
     async def disconnect(self, close_code):
-        await self.channel_layer.group_discard("admin_panel_group", self.channel_name)
+        # Leave the room
+        await self.channel_layer.group_discard(
+            self.room_group_name,
+            self.channel_name
+        )
 
-    async def send_notification(self, event):
-        await self.send(text_data=json.dumps(event))
-        
-class ChatConsumer(WebsocketConsumer):
-    def connect(self):
-        self.accept()
-
-    def disconnect(self, close_code):
-        pass
-
-    def receive(self, text_data):
+    async def receive(self, text_data):
         text_data_json = json.loads(text_data)
-        message = text_data_json["message"]
+        order = text_data_json['order']
 
-        self.send(text_data=json.dumps({"message": message}))
+        # Send message to room group
+        async_to_sync(self.channel_layer.group_send)(
+            self.room_group_name,
+            {
+                'type': 'order_details',
+                'order': order
+            }
+        )
+    
+    async def order_details(self, event):
+        order = event['order']
+
+        # Send message to WebSocket
+        await self.send(text_data=json.dumps({
+            'order': order
+        }))

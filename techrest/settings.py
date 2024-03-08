@@ -25,13 +25,13 @@ SECRET_KEY = 'django-insecure-=y5asq-fnm2rqs1kqhss@*k!1zia!zs9y19qjrn_8qv4*(8x1y
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["*"]
 
 
 # Application definition
 
 INSTALLED_APPS = [
-    # 'daphne',
+    'daphne',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'franchise',
     'rest_framework',
     'nested_admin',
+    'rest_framework_simplejwt'
 ]
 
 MIDDLEWARE = [
@@ -72,8 +73,8 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'techrest.wsgi.application'
-# ASGI_APPLICATION = 'techrest.asgi.application'
+# WSGI_APPLICATION = 'techrest.wsgi.application'
+ASGI_APPLICATION = 'techrest.asgi.application'
 
 
 # Database
@@ -133,3 +134,27 @@ MEDIA_URL = '/media/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 DOMAIN_NAME = "http://127.0.0.1:8000"
+
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels.layers.InMemoryChannelLayer',
+        # 'ROUTING': 'franchise.routing.websocket_urlpatterns',
+    },
+}
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    )
+}
+
+from datetime import timedelta
+...
+
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(days=15),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=30),
+
+    "ALGORITHM": "HS256",
+    "SIGNING_KEY": SECRET_KEY,
+}
