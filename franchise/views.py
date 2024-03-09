@@ -26,6 +26,7 @@ class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
 
 class CustomerAPIView(APIView):
     def post(self,request):
+        
         try:
             customer = Customer.objects.get(mobile_number=request.data['mobile_number'])
         except:
@@ -38,6 +39,20 @@ class CustomerAPIView(APIView):
             },settings.SECRET_KEY,algorithm="HS256")
         return Response({"access_token":access_token})
 
+class CustomerFingerAPIView(APIView):
+    def post(self,request):
+        try:
+            customer = Customer.objects.get(finger_print=request.data["finger_print"])
+        except:
+            return Response({'msg':'Invalid Finger Print'})
+        
+        access_token = jwt.encode({
+                "id":customer.id,
+                "name":customer.name,
+                "mobile_number":customer.mobile_number
+            },settings.SECRET_KEY,algorithm="HS256")
+        return Response({"access_token":access_token})
+                               
 
 class TableAPIView(APIView):
     authentication_classes = [IsJWTAuthenticated]
@@ -48,7 +63,7 @@ class TableAPIView(APIView):
             outlet = Outlet.objects.get(slug=outlet_slug, franchise=franchise)
         except (Table.DoesNotExist, Franchise.DoesNotExist, Outlet.DoesNotExist):
             return Response({'msg':'invalid url'})
-
+        
         serializer = FranchiseSerializer(franchise)
         new_data = serializer.data
         new_data['table_id'] = table_id
@@ -99,12 +114,69 @@ def send_order_to_consumers(room_group_name,table_order):
             'order': json.dumps(orders_with_names),
         }
     )
-    # print(serializer.data)
 
 def orders_view(request, franchise, outlet):
-    # Pass franchise and outlet data to the template
     context = {
         'franchise': franchise,
         'outlet': outlet
     }
     return render(request, 'outlet_tables.html', context)
+
+def table_view(request, franchise, outlet):
+    blue = "#2c6fbb"
+    grey = "#c7c5c5"
+    red = "red"
+    green = "#48A14D"
+
+    outlet = Outlet.objects.get(slug=outlet)
+    tables = Table.objects.filter(outlet=outlet)
+    
+    # Create separate dictionaries for each category
+    indoor_tables = []
+    outdoor_tables = []
+    mezzanine_tables = []
+
+    for table in tables:
+        color = green  # Default color is green
+
+        # Check if the table is not reserved
+        if not table.is_reserved:
+            color = grey
+        else:
+            try:
+                # Check if there is a TableOrder associated with this table
+                table_order = TableOrder.objects.get(table=table)
+            except TableOrder.DoesNotExist:
+                color = blue  # If no TableOrder, set color to blue
+            else:
+                # If there is a TableOrder, check if all KOTs associated with it are served
+                if not table_order.kot.filter(is_served=False).exists():
+                    color = green  # If all KOTs are served, set color to green
+                else:
+                    color = red  # If any KOT is not served, set color to red
+
+        # Append table details along with its color to the respective category dictionary
+        if table.category == "IN":
+            indoor_tables.append({
+                "table_id": table.table_number,
+                "table_color": color,
+                "table_type": table.category
+            })
+        elif table.category == "OU":
+            outdoor_tables.append({
+                "table_id": table.table_number,
+                "table_color": color,
+                "table_type": table.category
+            })
+        elif table.category == "MZ":
+            mezzanine_tables.append({
+                "table_id": table.table_number,
+                "table_color": color,
+                "table_type": table.category
+            })
+
+    context = {
+        "tables":[indoor_tables,outdoor_tables,mezzanine_tables]
+    }
+    return render(request, template_name="order_per_table.html", context=context)
+
