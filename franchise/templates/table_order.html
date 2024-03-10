@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Table Order Details</title>
+</head>
+<body>
+    {% if table_order %}
+    <h1>Table Order Details</h1>
+    <p>Table ID: {{ table_order.table_id }}</p>
+    <p>Customer Name: {{ table_order.customer.name }}</p>
+    <!-- Display KOTs and associated orders -->
+    {% for kot in orders %}
+    <h2>KOT ID: {{ kot.kot_id }}</h2>
+    <ul>
+        {% for order_detail in kot.order_details %}
+        <li>{{ order_detail.item_name }} - Quantity: {{ order_detail.quantity }}</li>
+        {% endfor %}
+    </ul>
+    {% endfor %}
+    {% elif error %}
+    <h1>Error</h1>
+    <p>{{ error }}</p>
+    {% else %}
+    <h1>No Table Order Found</h1>
+    {% endif %}
+</body>
+</html>

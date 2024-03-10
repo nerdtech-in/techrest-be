@@ -82,15 +82,41 @@ class MenuImage(models.Model):
 class Order(models.Model):
     item = models.ForeignKey(Menu,on_delete=models.CASCADE)
     quantity = models.IntegerField()
+    is_served = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True,null=True)
+    served_at = models.DateTimeField(null=True)
     
     def __str__(self):
         return self.item.name
     
 
 class KitchenOrderTicket(models.Model):
+    table = models.ForeignKey(Table,on_delete=models.CASCADE,null=True)
     order = models.ManyToManyField(Order)
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True,null=True)
+    served_at = models.DateTimeField(null=True)
     is_served = models.BooleanField(default=False)
+    
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        try:
+            room_group_name=self.table.outlet.franchise.slug+"_"+self.table.outlet.slug
+            # table_order = TableOrder.objects.get(table=self.table)
+            table_orders = TableOrder.objects.filter(table=self.table)
+            
+            if not unserved_kots_exist:
+                channel_layer = get_channel_layer()
+                async_to_sync(channel_layer.group_send)(
+                    "tables_" + room_group_name,
+                    {
+                        'type': 'update_table_color',
+                        'table_id': self.table.id,
+                        'table_color': "#48A14D",
+                    }
+                )
+            
+        except:
+            pass
 
     def __str__(self):
         return f"Order {self.created_at}"
@@ -107,6 +133,8 @@ class TableOrder(models.Model):
     table = models.ForeignKey(Table,on_delete=models.CASCADE)
     kot = models.ManyToManyField(KitchenOrderTicket)
     customer = models.ForeignKey(Customer,on_delete=models.CASCADE)
+    started_at = models.DateTimeField(auto_now_add=True,null=True)
+    completed_at = models.DateTimeField(null=True)
     is_paid = models.BooleanField(default=False)
     
 @receiver(post_save, sender=Table)
@@ -132,3 +160,4 @@ def generate_qr_code(sender, instance, created, **kwargs):
         buffer = BytesIO()
         img.save(buffer, format='PNG')
         instance.qr_code.save(f'qr_code_{instance.table_number}.png', buffer)
+

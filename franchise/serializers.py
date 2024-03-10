@@ -7,11 +7,13 @@ class MenuImageSerializer(serializers.ModelSerializer):
         fields = ('image',)
 
 class MenuSerializer(serializers.ModelSerializer):
-    images = MenuImageSerializer(many=True, read_only=True)
-
+    images = serializers.SerializerMethodField()
     class Meta:
         model = Menu
         fields = ('name', 'icon', 'gif', 'expected_delivery', 'description', 'price', 'images')
+        
+    def get_images(self,obj):
+        return MenuImageSerializer(MenuImage.objects.filter(menu=obj),many=True).data
 
 class SubCategorySerializer(serializers.ModelSerializer):
     menus = serializers.SerializerMethodField()

@@ -45,3 +45,32 @@ class FranchiseOutletConsumer(AsyncWebsocketConsumer):
         await self.send(text_data=json.dumps({
             'order': order
         }))
+        
+class TableStatusConsumer(AsyncWebsocketConsumer):
+    async def connect(self):
+        self.franchise = self.scope['url_route']['kwargs']['franchise']
+        self.outlet = self.scope['url_route']['kwargs']['outlet']
+        self.room_group_name = f'tables_{self.franchise}_{self.outlet}'
+        
+        print(self.room_group_name)  # Add this line to print the channel name
+        
+        await self.channel_layer.group_add(
+            self.room_group_name,
+            self.channel_name
+        )
+        
+        await self.accept()
+
+    async def disconnect(self, close_code):
+        # Handle disconnection
+        pass
+
+    async def send_table_status(self, event):
+        tables = Table.objects.all()
+        table_data = [{'id': table.id, 'table_color': table.get_color()} for table in tables]
+        await self.send(text_data=json.dumps({'tables': table_data}))
+
+    async def update_table_color(self, event):
+        table_id = event['table_id']
+        table_color = event['table_color']
+        await self.send(text_data=json.dumps({'table_id': table_id, 'table_color': table_color}))
