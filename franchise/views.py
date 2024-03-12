@@ -87,10 +87,13 @@ class OrderAPIView(APIView):
             kot.save()
             table.is_reserved=True
             table.save()
-            table_order, created = TableOrder.objects.get_or_create(
-                table_id=table_id,
-                customer_id=customer.id
-            )
+            try:
+                table_order = TableOrder.objects.get(table=table, customer=customer,is_paid=False)
+                if table_order:
+                    table_order = TableOrder.objects.create(table=table, customer=customer)
+                
+            except TableOrder.DoesNotExist:
+                table_order = TableOrder.objects.create(table=table, customer=customer)
             table_order.kot.add(kot)
             room_group_name = table.outlet.franchise.slug+"_"+table.outlet.slug
             send_order_to_consumers(room_group_name,order_dict,table_id)
@@ -152,7 +155,7 @@ def table_view(request, franchise, outlet):
             color = grey
         else:
             try:
-                table_order = TableOrder.objects.get(table=table)
+                table_order = TableOrder.objects.get(table=table,is_paid=False)
             except TableOrder.DoesNotExist:
                 color = blue
             else:

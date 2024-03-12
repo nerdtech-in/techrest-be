@@ -6,7 +6,9 @@ import qrcode
 from io import BytesIO
 from PIL import Image
 from django.conf import settings
-
+from asgiref.sync import async_to_sync
+import json
+from channels.layers import get_channel_layer
 
 class Franchise(models.Model):
     name = models.CharField(max_length=30, null=True)
@@ -101,20 +103,25 @@ class KitchenOrderTicket(models.Model):
         super().save(*args, **kwargs)
         try:
             room_group_name=self.table.outlet.franchise.slug+"_"+self.table.outlet.slug
-            # table_order = TableOrder.objects.get(table=self.table)
-            table_orders = TableOrder.objects.filter(table=self.table)
+            channel_layer = get_channel_layer()
+            table_orders = TableOrder.objects.get(table=self.table,is_paid=False)
             
-            if not unserved_kots_exist:
-                channel_layer = get_channel_layer()
-                async_to_sync(channel_layer.group_send)(
-                    "tables_" + room_group_name,
-                    {
-                        'type': 'update_table_color',
-                        'table_id': self.table.id,
-                        'table_color': "#48A14D",
-                    }
-                )
+            kots = table_orders.kot.all()
+            color = "#48A14D"
+            for kot in kots:
+                if kot.is_served == False:
+                    color = "#B33F40"
+                    break
             
+            async_to_sync(channel_layer.group_send)(
+                        "tables_" + room_group_name,
+                        {
+                            'type': 'update_table_color',
+                            'table_id': self.table.id,
+                            'table_color': color,
+                        }
+                    )
+            print(room_group_name)
         except:
             pass
 
@@ -137,6 +144,20 @@ class TableOrder(models.Model):
     completed_at = models.DateTimeField(null=True)
     is_paid = models.BooleanField(default=False)
     
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        if self.is_paid == True:
+            room_group_name=self.table.outlet.franchise.slug+"_"+self.table.outlet.slug
+            channel_layer = get_channel_layer()
+            async_to_sync(channel_layer.group_send)(
+                "tables_" + room_group_name,
+                    {
+                        'type': 'update_table_color',
+                        'table_id': self.table.id,
+                        'table_color': "#c7c5c5",
+                    }
+                )
+            
 @receiver(post_save, sender=Table)
 def generate_qr_code(sender, instance, created, **kwargs):
     if created:

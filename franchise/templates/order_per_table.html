@@ -24,9 +24,9 @@
 <body class="bg-gray-100">
   {% comment %} {% include "aside_bar.html" %} {% endcomment %}
   
-  {% for table in tables%}
   <div class="rounded-md">
-    <div class="p-4 sm:ml-64 shadow-md bg-gray-50 rounded-lg">
+    {% for table in tables%}
+    <div class="p-4 shadow-md bg-gray-50 rounded-lg">
       <p class="ms-3 text-center">{{ table.0.table_type }}</p>
       <div
       class="grid grid-cols-5 grid-rows-1 bg-gray-100 p-0 rounded-md items-center justify-center"
