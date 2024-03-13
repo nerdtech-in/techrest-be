@@ -4,6 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Tailwind CSS Example</title>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
   <!-- Include Tailwind CSS -->
   <link
   href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
@@ -19,11 +21,75 @@
   href="https://cdn.jsdelivr.net/npm/material-tailwind/dist/material-tailwind.min.css"
   rel="stylesheet"
   />
+   <style>
+    .container {
+      display: flex;
+      justify-content: space-between;
+      max-width: 100%%;
+      margin: 0 auto;
+    }
+    .left-section {
+      flex: 0 0 60%; /* Adjust the width as needed */
+    }
+    .right-section {
+      flex: 1 0 30%; /* Adjust the width as needed */
+    }
+    /* CSS for the table */
+table {
+  border-collapse: collapse;
+  width: 100%;
+}
+table th,
+table td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: left;
+}
+
+table th {
+  background-color: #f2f2f2;
+}
+
+/* CSS for table header */
+table th {
+  background-color: #f2f2f2;
+}
+
+/* CSS for table rows */
+table tr:nth-child(even) {
+  background-color: #f2f2f2;
+}
+
+table tr:hover {
+  background-color: #ddd;
+}
+
+/* CSS for table responsive */
+@media screen and (max-width: 600px) {
+  table {
+    overflow-x: auto;
+    display: block;
+  }
+  table th, .table td {
+    white-space: nowrap;
+  }
+}
+.action-btn {
+      background-color: #4caf50;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      padding: 8px 12px;
+      font-size: 14px;
+    }
+  </style>
   <script src="https://unpkg.com/@material-tailwind/html@latest/scripts/script-name.js"></script>
 </head>
 <body class="bg-gray-100">
+  <div class="container">
+  <div class="left-section rounded-md">
   {% comment %} {% include "aside_bar.html" %} {% endcomment %}
-  
   <div class="rounded-md">
     {% for table in tables%}
     <div class="p-4 shadow-md bg-gray-50 rounded-lg">
@@ -81,6 +147,34 @@
 </div>
 </div>
 {%endfor%}
+</div>
+    </div>
+    <div class="right-section">
+      <table class="table-auto w-full">
+    <thead>
+      <tr>
+        <th class="px-4 py-2">Table Number</th>
+        <th class="px-4 py-2">Product Name</th>
+        <th class="px-4 py-2">Quantity</th>
+        <th class="px-4 py-2">Action</th>
+      </tr>
+    </thead>
+    <tbody id ="order-rows">
+      {%for i in orders%}
+      <tr>
+        <td class="border px-4 py-2">{{i.table_number}}</td>
+        <td class="border px-4 py-2">{{i.item.name}}</td>
+        <td class="border px-4 py-2">{{i.quantity}}</td>
+        <td class="border px-4 py-2">
+              <button class="action-btn" id=1 onclick="serveOrder(`{{i.id}}`,this)">Serve</button> <!-- Serve button -->
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+    </div>
+  </div>
+
 <script>
   function handleClick(tableId) {
     console.log('SVG element clicked:',tableId);
@@ -89,6 +183,20 @@
     window.location.href = newUrl;
   }
 
+  function serveOrder(orderId,button) {
+      var row = button.parentNode.parentNode;
+      $.ajax({
+          url: '/mark_order_served/', // Replace this with your server endpoint
+          method: 'POST',
+          data: { orderId: orderId },
+          success: function(response) {
+              row.parentNode.removeChild(row);
+          },
+          error: function(xhr, status, error) {
+              console.error("Error marking order as served:", error);
+          }
+      });
+  }
 
   const wsScheme = window.location.protocol === 'https:' ? 'wss' : 'ws';
   const wsPath = `${wsScheme}://${window.location.host}/ws/tables/{{franchise}}/{{outlet}}/`;
@@ -120,7 +228,33 @@
         console.log('SVG element not found for ID:', message.table_id);
     }
 };
+  const order_socket = new WebSocket(
+  wsScheme+'://' + window.location.host +
+  '/ws/{{ franchise }}/{{ outlet }}/'
+  );
+  
+  order_socket.onopen = function(event) {
+    console.log('WebSocket connection established.');
+  };
+  
+  order_socket.onmessage = function(event) {
+    const data = JSON.parse(event.data);
+    const orderDetails = data.order;
+    order = JSON.parse(orderDetails)
+    console.log(order)
 
+    const orderRows = document.getElementById('order-rows')
+    for (let i=0; i< order.length;i++){
+      orderRows.innerHTML +=`<tr>
+        <td class="border px-4 py-2">${order[i].table_number}</td>
+        <td class="border px-4 py-2">${order[i].item_name}</td>
+        <td class="border px-4 py-2">${order[i].quantity}</td>
+        <td class="border px-4 py-2">
+              <button class="action-btn" id=${order[i].order_id} onclick="serveOrder(${order[i].order_id},this)">Serve</button> <!-- Serve button -->
+        </td>
+      </tr>`
+    }
+  };
 </script>
 </body>
 </html>
