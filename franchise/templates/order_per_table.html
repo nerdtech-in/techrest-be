@@ -5,18 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Tailwind CSS Example</title>
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-
-  <!-- Include Tailwind CSS -->
   <link
   href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
   rel="stylesheet"
   />
-  <!-- Include Flowbite CSS -->
   <link
   href="https://cdn.jsdelivr.net/npm/flowbite@latest/dist/flowbite.css"
   rel="stylesheet"
   />
-  <!-- Include Material Tailwind CSS -->
   <link
   href="https://cdn.jsdelivr.net/npm/material-tailwind/dist/material-tailwind.min.css"
   rel="stylesheet"
@@ -29,10 +25,10 @@
       margin: 0 auto;
     }
     .left-section {
-      flex: 0 0 60%; /* Adjust the width as needed */
+      flex: 0 0 60%; 
     }
     .right-section {
-      flex: 1 0 30%; /* Adjust the width as needed */
+      flex: 1 0 30%;
     }
     /* CSS for the table */
 table {
@@ -166,7 +162,7 @@ table tr:hover {
         <td class="border px-4 py-2">{{i.item.name}}</td>
         <td class="border px-4 py-2">{{i.quantity}}</td>
         <td class="border px-4 py-2">
-              <button class="action-btn" id=1 onclick="serveOrder(`{{i.id}}`,this)">Serve</button> <!-- Serve button -->
+              <button class="action-btn" id=1 onclick="serveOrder(`{{i.id}}`,this)">Serve</button>
         </td>
       </tr>
       {% endfor %}
@@ -186,7 +182,7 @@ table tr:hover {
   function serveOrder(orderId,button) {
       var row = button.parentNode.parentNode;
       $.ajax({
-          url: '/mark_order_served/', // Replace this with your server endpoint
+          url: '/mark_order_served/',
           method: 'POST',
           data: { orderId: orderId },
           success: function(response) {

@@ -143,6 +143,7 @@ class TableOrder(models.Model):
     started_at = models.DateTimeField(auto_now_add=True,null=True)
     completed_at = models.DateTimeField(null=True)
     is_paid = models.BooleanField(default=False)
+    is_pending = models.BooleanField(default=False)
     
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)

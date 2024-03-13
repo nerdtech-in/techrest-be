@@ -10,7 +10,7 @@ class MenuSerializer(serializers.ModelSerializer):
     images = serializers.SerializerMethodField()
     class Meta:
         model = Menu
-        fields = ('name', 'icon', 'gif', 'expected_delivery', 'description', 'price', 'images')
+        fields = ('id','name', 'icon', 'gif', 'expected_delivery', 'description', 'price', 'images')
         
     def get_images(self,obj):
         return MenuImageSerializer(MenuImage.objects.filter(menu=obj),many=True).data
