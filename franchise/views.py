@@ -287,8 +287,30 @@ class PaymentAPIView(APIView):
                     table_order.is_paid = True
                 table_order.payment_method = payment_method
                 table_order.save()
+                table = Table.objects.get(id=table_order.table.id)
+                table.is_reserved = False
+                table.save()
                 return Response({"msg": "Payment successful."}, status=status.HTTP_200_OK)
             except TableOrder.DoesNotExist:
                 return Response({"msg": "Table order not found."}, status=status.HTTP_404_NOT_FOUND)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+class MakePaymentAPIView(APIView):
+    def post(self, request):
+        payment_method = request.data.get('paymentMethod')
+        table_order_id = request.data.get('table_order_id')
+        print(payment_method,table_order_id)
+        table_order = TableOrder.objects.get(id=table_order_id)
+        table_order.is_paid=True
+        table_order.payment_method=payment_method.title()
+        table = Table.objects.get(id=table_order.table.id)
+        table.is_reserved=False
+        table.save()
+        table_order.save()
+        if payment_method == 'cash':
+            return Response({'msg': 'Cash payment processed successfully.'}, status=status.HTTP_200_OK)
+        elif payment_method == 'online':
+            return Response({'msg': 'Online payment processed successfully.'}, status=status.HTTP_200_OK)
+        else:
+            return Response({'msg': 'Invalid payment method.'}, status=status.HTTP_400_BAD_REQUEST)

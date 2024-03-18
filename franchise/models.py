@@ -139,7 +139,7 @@ class Customer(models.Model):
 class TableOrder(models.Model):
     table = models.ForeignKey(Table,on_delete=models.CASCADE)
     kot = models.ManyToManyField(KitchenOrderTicket)
-    customer = models.ForeignKey(Customer,on_delete=models.CASCADE)
+    customer = models.ForeignKey(Customer,on_delete=models.CASCADE,null=True,blank=True)
     started_at = models.DateTimeField(auto_now_add=True,null=True)
     completed_at = models.DateTimeField(null=True)
     is_paid = models.BooleanField(default=False)
