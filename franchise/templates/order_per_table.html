@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Tailwind CSS Example</title>
+  <title>Chai Tapri</title>
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
   <link
   href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
@@ -21,7 +21,7 @@
     .container {
       display: flex;
       justify-content: space-between;
-      max-width: 100%%;
+      max-width: 100%;
       margin: 0 auto;
     }
     .left-section {
@@ -46,12 +46,10 @@ table th {
   background-color: #f2f2f2;
 }
 
-/* CSS for table header */
 table th {
   background-color: #f2f2f2;
 }
 
-/* CSS for table rows */
 table tr:nth-child(even) {
   background-color: #f2f2f2;
 }
@@ -88,7 +86,8 @@ table tr:hover {
   {% comment %} {% include "aside_bar.html" %} {% endcomment %}
   <div class="rounded-md">
     {% for table in tables%}
-    <div class="p-4 shadow-md bg-gray-50 rounded-lg">
+    {% comment %} {%if %} {% endcomment %}
+    <div class="p-4 shadow bg-gray-50 rounded-lg m-2">
       <p class="ms-3 text-center">{{ table.0.table_type }}</p>
       <div
       class="grid grid-cols-5 grid-rows-1 bg-gray-100 p-0 rounded-md items-center justify-center"
@@ -176,7 +175,7 @@ table tr:hover {
     console.log('SVG element clicked:',tableId);
     var currentUrl = window.location.href;
     var newUrl = currentUrl + "table/" + tableId;
-    window.location.href = newUrl;
+    window.open( newUrl,"_blank");
   }
 
   function serveOrder(orderId,button) {
@@ -242,7 +241,7 @@ table tr:hover {
     const orderRows = document.getElementById('order-rows')
     for (let i=0; i< order.length;i++){
       orderRows.innerHTML +=`<tr>
-        <td class="border px-4 py-2">${order[i].table_number}</td>
+        <td class="border px-4 py-2">${order[i].table_code}</td>
         <td class="border px-4 py-2">${order[i].item_name}</td>
         <td class="border px-4 py-2">${order[i].quantity}</td>
         <td class="border px-4 py-2">

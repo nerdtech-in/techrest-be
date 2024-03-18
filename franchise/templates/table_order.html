@@ -4,26 +4,124 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Table Order Details</title>
+    <link
+    href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
+    rel="stylesheet"
+    />
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f9f9f9;
+        }
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            font-size: 32px;
+            color: #333;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        h2 {
+            font-size: 24px;
+            color: #555;
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+        ul {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+        }
+        .kot {
+            background-color: #f9f9f9;
+            border-radius: 5px;
+            padding: 10px;
+            margin-bottom: 20px;
+        }
+        .customer-name {
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+        .table-id {
+            font-size: 20px;
+            color: #333; /* Dark gray color */
+            margin-bottom: 10px;
+        }
+        li {
+            font-size: 16px;
+            color: #777;
+            margin-bottom: 8px;
+        }
+        .error {
+            color: red;
+            text-align: center;
+        }
+        .total {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+        }
+        .create-order-btn {
+            display: block;
+            width: fit-content;
+            margin: 20px auto;
+            padding: 10px 20px;
+            background-color: #4caf50; /* Green */
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .create-order-btn:hover {
+            background-color: #45a049; /* Darker green */
+        }
+    </style>
 </head>
 <body>
-    {% if table_order %}
-    <h1>Table Order Details</h1>
-    <p>Table ID: {{ table_order.table_id }}</p>
-    <p>Customer Name: {{ table_order.customer.name }}</p>
-    <!-- Display KOTs and associated orders -->
-    {% for kot in orders %}
-    <h2>KOT ID: {{ kot.kot_id }}</h2>
-    <ul>
-        {% for order_detail in kot.order_details %}
-        <li>{{ order_detail.item_name }} - Quantity: {{ order_detail.quantity }}</li>
+    <div class="container">
+        {% if table_order %}
+        <h1>Table Order Details</h1>
+        <div class="table-info">
+            <p class="table-id"><strong>Table ID:</strong> {{ table_order.table.category}}{{table_order.table.table_number }}</p>
+            <p class="customer-name"><strong>Customer Name:</strong> {{ table_order.customer.name }}</p>
+        </div>
+        {% for kot in orders %}
+        <div class="kot">
+            <h2>KOT ID: {{ forloop.counter }}</h2>
+            <ul>
+                {% for order_detail in kot.order_details %}
+                <li>{{ order_detail.item_name }} - Quantity: {{ order_detail.quantity }} - Amount: ₹{{ order_detail.price }}</li>
+                {% endfor %}
+            </ul>
+        </div>
         {% endfor %}
-    </ul>
-    {% endfor %}
-    {% elif error %}
-    <h1>Error</h1>
-    <p>{{ error }}</p>
-    {% else %}
-    <h1>No Table Order Found</h1>
-    {% endif %}
+        <p class="total">Total Amount for KOT: ₹{{ total }}</p>
+        {% elif error %}
+        <div class="error">
+            <h1>Error</h1>
+            <p>{{ error }}</p>
+        </div>
+        {% else %}
+        <h1>No Table Order Found</h1>
+        {% endif %}
+    </div>
+    <button class="create-order-btn" onclick="redirectToPlaceOrder()">Create Order</button>
+
+    <script>
+        function redirectToPlaceOrder() {
+            const tableId = "{{ table_order.table.id }}";
+            const userId = "{{ table_order.customer.id }}";
+            const url = `/place-order/${tableId}/${userId}/`;
+            window.location.href = url;
+        }
+    </script>
 </body>
 </html>

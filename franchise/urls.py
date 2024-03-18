@@ -1,14 +1,10 @@
 # urls.py
 
 from django.urls import path, include
-from rest_framework import routers
-from .views import MarkOrderServedView,CategoryViewSet,TableAPIView,CustomerAPIView,OrderAPIView,orders_view,table_view,show_table_order,CustomerFingerAPIView
-
-router = routers.DefaultRouter()
-router.register(r'categories', CategoryViewSet)
+from .views import MarkOrderServedView,TableOrderAPIView,TableAPIView,CustomerAPIView,OrderAPIView,orders_view,table_view,show_table_order,CustomerFingerAPIView,PaymentAPIView
+from .form_views import create_order,order_success
 
 urlpatterns = [
-    path('', include(router.urls)),
     path('menu/<str:franchise_slug>/<str:outlet_slug>/<int:table_id>/',TableAPIView.as_view()),
     path('login/',CustomerAPIView.as_view()),
     path('print-login/',CustomerFingerAPIView.as_view()),
@@ -16,5 +12,9 @@ urlpatterns = [
     path('orders/<franchise>/<outlet>/', orders_view, name='orders_view'),
     path('tables/<franchise>/<outlet>/',table_view,name="table_view"),
     path('tables/<franchise>/<outlet>/table/<int:table_id>',show_table_order,name="table_view"),
-    path('mark_order_served/', MarkOrderServedView.as_view(), name='mark_order_served'),
+    path('mark_order_served/', MarkOrderServedView.as_view(), name='mark-order-served'),
+    path('my-order-history/', TableOrderAPIView.as_view(), name='mark-order-served'),
+    path('make-payment/', PaymentAPIView.as_view(), name='make_payment'),
+    path('place-order/<int:table_id>/<str:user_id>/', create_order, name='place-order'),
+    path('order-success/', order_success, name='order_success'),
 ]

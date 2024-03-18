@@ -5,6 +5,10 @@ class MenuImageInline(admin.TabularInline):
     model = MenuImage
     extra = 1
 
+class MenuInline(admin.TabularInline):
+    model = Menu
+    extra = 1
+
 class TableOrderInline(admin.TabularInline):
     model = TableOrder
     extra = 1
@@ -47,6 +51,7 @@ class CategoryAdmin(admin.ModelAdmin):
 
 @admin.register(Menu)
 class MenuAdmin(admin.ModelAdmin):
+    list_display = ['id','name','price','sub_category']
     inlines = [MenuImageInline]
 
 @admin.register(TableOrder)
@@ -68,4 +73,4 @@ class OrderAdmin(admin.ModelAdmin):
 
 @admin.register(SubCategory)
 class SubCategoryAdmin(admin.ModelAdmin):
-    pass
+    inlines = [MenuInline,]

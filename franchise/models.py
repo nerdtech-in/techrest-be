@@ -46,7 +46,7 @@ class Table(models.Model):
     qr_code = models.ImageField(upload_to='qr_codes', null=True, blank=True)
 
     def __str__(self):
-        return f"Table {self.table_number} at {self.outlet.name}"
+        return f"Table {self.category}{self.table_number} at {self.outlet.name}"
 
 
 class Category(models.Model):
@@ -66,9 +66,9 @@ class SubCategory(models.Model):
 class Menu(models.Model):
     sub_category  = models.ForeignKey(SubCategory, on_delete=models.CASCADE)
     # franchise = models.ForeignKey(Franchise, on_delete=models.CASCADE)
-    name = models.CharField(max_length=20)
-    icon = models.ImageField(upload_to='menu-icons')
-    gif = models.FileField(upload_to='menu_gifs')
+    name = models.CharField(max_length=100)
+    icon = models.ImageField(upload_to='menu-icons',null=True,blank=True)
+    gif = models.FileField(upload_to='menu_gifs',null=True,blank=True)
     expected_delivery = models.IntegerField(help_text="In minutes.")
     description = models.TextField()
     price = models.DecimalField(max_digits=6, decimal_places=2)
@@ -144,6 +144,7 @@ class TableOrder(models.Model):
     completed_at = models.DateTimeField(null=True)
     is_paid = models.BooleanField(default=False)
     is_pending = models.BooleanField(default=False)
+    payment_method = models.CharField(max_length=100,choices=(('Cash','Cash'),('Online','Online')),blank=True,null=True)
     
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
@@ -182,4 +183,3 @@ def generate_qr_code(sender, instance, created, **kwargs):
         buffer = BytesIO()
         img.save(buffer, format='PNG')
         instance.qr_code.save(f'qr_code_{instance.table_number}.png', buffer)
-

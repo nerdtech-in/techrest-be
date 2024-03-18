@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'nested_admin',
     'rest_framework_simplejwt',
     "corsheaders",
+    'mathfilters',
 ]
 
 MIDDLEWARE = [
@@ -135,12 +136,11 @@ MEDIA_URL = '/media/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-DOMAIN_NAME = "http://127.0.0.1:8000"
+DOMAIN_NAME = "http://192.168.29.33:3000/#"
 
 CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels.layers.InMemoryChannelLayer',
-        # 'ROUTING': 'franchise.routing.websocket_urlpatterns',
     },
 }
 
@@ -165,4 +165,5 @@ CORS_ALLOWED_ORIGINS = [
     "https://sub.example.com",
     "http://localhost:3000",
     "http://127.0.0.1:9000",
+    "http://192.168.29.33:3000",
 ]

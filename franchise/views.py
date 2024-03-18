@@ -4,7 +4,7 @@ from django.db.models import F
 from .serializers import OrderSerializer
 from rest_framework import viewsets
 from .models import Category,Franchise,Outlet,Table,KitchenOrderTicket,TableOrder,Menu
-from .serializers import CategorySerializer,FranchiseSerializer,OrderSerializer,TableOrderSerializer,KitchenOrderTicketSerializer
+from .serializers import CategorySerializer,FranchiseSerializer,OrderSerializer,TableOrderSerializer,KitchenOrderTicketSerializer,UserTableOrderSerializer,PaymentSerializer
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import Token
@@ -18,12 +18,6 @@ from asgiref.sync import async_to_sync
 import json
 from . import consumer_serializers
 from django.shortcuts import get_object_or_404
-
-class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = Category.objects.all()
-    
-    serializer_class = CategorySerializer
-
 
 class CustomerAPIView(APIView):
     def post(self,request):
@@ -75,24 +69,27 @@ class TableAPIView(APIView):
 class OrderAPIView(APIView):
     authentication_classes = [IsJWTAuthenticated]
     def post(self, request):
-        order_dict = dict()
+        table_id = request.data.get('table_id')
+        table=Table.objects.get(id=table_id)
         customer = request.user
+        # if table.is_reserved:
+        #     try:
+        #         table_order = TableOrder.objects.get(table=table,customer=customer,is_paid=False)
+        #     except:
+        #         return Response({'msg':'Table is Already Reserved'})
+        order_dict = dict()
         serializer = OrderSerializer(data=request.data['products'], many=True)
         if serializer.is_valid():
             orders = serializer.save()
             order_dict=serializer.data
             kot = KitchenOrderTicket.objects.create()
             kot.order.add(*orders)
-            table_id = request.data.get('table_id')
-            table=Table.objects.get(id=table_id)
             kot.table=table
             kot.save()
             table.is_reserved=True
             table.save()
             try:
                 table_order = TableOrder.objects.get(table=table,customer=customer,is_paid=False)
-                # if table_order.customer !=  customer:
-                #     pass
                 if table_order is None:
                     table_order = TableOrder.objects.create(table=table, customer=customer)
                 
@@ -100,16 +97,14 @@ class OrderAPIView(APIView):
                 table_order = TableOrder.objects.create(table=table, customer=customer)
             table_order.kot.add(kot)
             room_group_name = table.outlet.franchise.slug+"_"+table.outlet.slug
-            send_order_to_consumers(room_group_name,order_dict,table_id,table.table_number)
+            table_code = table.category+str(table.table_number)
+            send_order_to_consumers(room_group_name,order_dict,table_id,table.table_number,table_code)
             serializer = consumer_serializers.TableOrderSerializer(table_order)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
-    # def get(self,request):
-    #     try:
-    #         table_order = TableOrder.objects.get()
 
-def send_order_to_consumers(room_group_name,table_order,table_id,table_number):
+
+def send_order_to_consumers(room_group_name,table_order,table_id,table_number,table_code):
     channel_layer = get_channel_layer()
     
     orders_with_names = []
@@ -122,7 +117,8 @@ def send_order_to_consumers(room_group_name,table_order,table_id,table_number):
             'quantity': quantity,
             'table_number':table_number,
             'table_id': table_id,
-            'order_id':order['id']
+            'order_id':order['id'],
+            'table_code':table_code
         })
         
     async_to_sync(channel_layer.group_send)(
@@ -209,7 +205,7 @@ def table_view(request, franchise, outlet):
             })
 
     context = {
-        "tables":[indoor_tables,outdoor_tables,mezzanine_tables],
+        "tables":[outdoor_tables,indoor_tables,mezzanine_tables],
         "franchise":franchise, "outlet": outlet,
         "orders":unserved_orders,
     }
@@ -217,6 +213,7 @@ def table_view(request, franchise, outlet):
 
 def show_table_order(request,franchise, outlet,table_id):
     try:
+        total = 0
         table_order = TableOrder.objects.filter(table_id=table_id, is_paid=False).first()
         if table_order:
             kots = table_order.kot.all()
@@ -226,13 +223,16 @@ def show_table_order(request,franchise, outlet,table_id):
                 for order in kot.order.all():
                     order_details.append({
                         'item_name': order.item.name,
-                        'quantity': order.quantity
+                        'quantity': order.quantity,
+                        'price':order.item.price*order.quantity
                     })
+                    total+=order.item.price*order.quantity
                 orders.append({
                     'kot_id': kot.id,
-                    'order_details': order_details
+                    'order_details': order_details,
                 })
-            return render(request, 'table_order.html', {'table_order': table_order, 'orders': orders})
+                
+            return render(request, 'table_order.html', {'table_order': table_order, 'orders': orders,'total':total})
         else:
             return render(request, 'table_order.html', {'error': 'Table order not found or already paid.'})
     except Exception as e:
@@ -262,3 +262,33 @@ class MarkOrderServedView(APIView):
         except Exception as e:
             print(str(e))
             return Response({'error': str(e)}, status=500)
+        
+class TableOrderAPIView(APIView):
+    authentication_classes = [IsJWTAuthenticated]
+    def get(self,request):
+        customer = request.user
+        table_orders = TableOrder.objects.filter(customer=customer,is_paid=False)
+        serializer = UserTableOrderSerializer(table_orders,many=True)
+        return Response(serializer.data)
+    
+    
+class PaymentAPIView(APIView):
+    authentication_classes = [IsJWTAuthenticated]
+    def post(self, request):
+        serializer = PaymentSerializer(data=request.data)
+        if serializer.is_valid():
+            table_order_id = serializer.validated_data['table_order_id']
+            payment_method = serializer.validated_data['payment_method']
+            try:
+                table_order = TableOrder.objects.get(pk=table_order_id)
+                if table_order.is_paid:
+                    return Response({'msg':'Order is Already Paid'})
+                else:
+                    table_order.is_paid = True
+                table_order.payment_method = payment_method
+                table_order.save()
+                return Response({"msg": "Payment successful."}, status=status.HTTP_200_OK)
+            except TableOrder.DoesNotExist:
+                return Response({"msg": "Table order not found."}, status=status.HTTP_404_NOT_FOUND)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

@@ -75,3 +75,27 @@ class TableOrderSerializer(serializers.ModelSerializer):
     class Meta:
         model = TableOrder
         fields = '__all__'
+
+
+class UserOrderSerializer(serializers.ModelSerializer):
+    item = MenuSerializer()
+    class Meta:
+        model = Order
+        fields = "__all__"
+
+class UserKitchenOrderTicketSerializer(serializers.ModelSerializer):
+    order = UserOrderSerializer(many=True)
+    class Meta:
+        model = KitchenOrderTicket
+        fields = '__all__'
+
+class UserTableOrderSerializer(serializers.ModelSerializer):
+    kot = UserKitchenOrderTicketSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = TableOrder
+        fields = '__all__'
+
+class PaymentSerializer(serializers.Serializer):
+    table_order_id = serializers.IntegerField()
+    payment_method = serializers.ChoiceField(choices=(('Cash', 'Cash'), ('Online', 'Online')))
