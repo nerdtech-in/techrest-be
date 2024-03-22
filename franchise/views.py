@@ -316,7 +316,7 @@ class MakePaymentAPIView(APIView):
             return Response({'msg': 'Invalid payment method.'}, status=status.HTTP_400_BAD_REQUEST)
 
 class QRAPIView(APIView):
-    def post(request):
+    def post(self,request):
         tables = Table.objects.all()
         link = request.data['link']
         for table in tables:

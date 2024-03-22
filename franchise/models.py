@@ -4,7 +4,7 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 import qrcode
 from io import BytesIO
-from PIL import Image
+from PIL import Image,ImageDraw
 from django.conf import settings
 from asgiref.sync import async_to_sync
 import json
@@ -46,7 +46,7 @@ class Table(models.Model):
     qr_code = models.ImageField(upload_to='qr_codes', null=True, blank=True)
     
     
-    def generate_qr_code(self,link):
+    def generate_qr_code(self,link=settings.DOMAIN_NAME):
         qr_size = 450
 
         qr = qrcode.QRCode(
@@ -57,14 +57,18 @@ class Table(models.Model):
         )
         qr.add_data(f'{link}/menu/{self.outlet.franchise.slug}/{self.outlet.slug}/{self.id}/')
         qr.make(fit=True)
-
+        
+        
         img = qr.make_image(fill_color="black", back_color="white")
         img = img.resize((qr_size, qr_size), Image.LANCZOS)
+        draw = ImageDraw.Draw(img)
+        name = self.category+str(self.table_number)
+        draw.text((10, 10), name, fill="black")
         buffer = BytesIO()
         img.save(buffer, format='PNG')
-        self.qr_code.save(f'qr_code_{self.table_number}.png', buffer, save=False)
+        self.qr_code.save(f'qr_code_{self.table_number}_{self.category}.png', buffer, save=False)
         self.save() 
-    
+        
     
     def __str__(self):
         return f"Table {self.category}{self.table_number} at {self.outlet.name}"
@@ -200,7 +204,7 @@ def generate_qr_code(sender, instance, created, **kwargs):
         qr.make(fit=True)
 
         img = qr.make_image(fill_color="black", back_color="white")
-        img = img.resize((qr_size, qr_size), Image.LANCZOS)  # Resize QR code image
+        img = img.resize((qr_size, qr_size), Image.LANCZOS)
         buffer = BytesIO()
         img.save(buffer, format='PNG')
         instance.qr_code.save(f'qr_code_{instance.table_number}.png', buffer)

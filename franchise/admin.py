@@ -1,6 +1,14 @@
 from django.contrib import admin
 from .models import Franchise, Outlet, Table, Category, SubCategory, Menu, MenuImage, Order, KitchenOrderTicket, Customer, TableOrder
 
+
+def generate_qr_codes(modeladmin, request, queryset):
+    for table in queryset:
+        table.generate_qr_code()
+    modeladmin.message_user(request, "QR codes generated successfully.")
+
+generate_qr_codes.short_description = "Generate QR codes"
+
 class MenuImageInline(admin.TabularInline):
     model = MenuImage
     extra = 1
@@ -44,6 +52,7 @@ class OutletAdmin(admin.ModelAdmin):
 @admin.register(Table)
 class TableAdmin(admin.ModelAdmin):
     inlines = [TableOrderInline]
+    actions = [generate_qr_codes,]
 
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
