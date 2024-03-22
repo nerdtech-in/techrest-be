@@ -44,7 +44,28 @@ class Table(models.Model):
     category = models.CharField(max_length=50, choices=(("IN", "INDOOR"), ("OU", "OUTDOOR"), ("MZ", "MEZZANINE")))
     is_reserved = models.BooleanField(default=False)
     qr_code = models.ImageField(upload_to='qr_codes', null=True, blank=True)
+    
+    
+    def generate_qr_code(self,link):
+        qr_size = 450
 
+        qr = qrcode.QRCode(
+            version=1,
+            error_correction=qrcode.constants.ERROR_CORRECT_L,
+            box_size=10,
+            border=4,
+        )
+        qr.add_data(f'{link}/menu/{self.outlet.franchise.slug}/{self.outlet.slug}/{self.id}/')
+        qr.make(fit=True)
+
+        img = qr.make_image(fill_color="black", back_color="white")
+        img = img.resize((qr_size, qr_size), Image.LANCZOS)
+        buffer = BytesIO()
+        img.save(buffer, format='PNG')
+        self.qr_code.save(f'qr_code_{self.table_number}.png', buffer, save=False)
+        self.save() 
+    
+    
     def __str__(self):
         return f"Table {self.category}{self.table_number} at {self.outlet.name}"
 

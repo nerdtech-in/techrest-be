@@ -314,3 +314,11 @@ class MakePaymentAPIView(APIView):
             return Response({'msg': 'Online payment processed successfully.'}, status=status.HTTP_200_OK)
         else:
             return Response({'msg': 'Invalid payment method.'}, status=status.HTTP_400_BAD_REQUEST)
+
+class QRAPIView(APIView):
+    def post(request):
+        tables = Table.objects.all()
+        link = request.data['link']
+        for table in tables:
+            table.generate_qr_code(link)
+        return Response({'msg':"QR Changed"})
