@@ -165,6 +165,10 @@ SIMPLE_JWT = {
     "SIGNING_KEY": SECRET_KEY,
 }
 
+CSRF_TRUSTED_ORIGINS=[
+    "https://api.techrest.in"
+]
+
 CORS_ALLOWED_ORIGINS = [
     "https://example.com",
     "https://sub.example.com",
