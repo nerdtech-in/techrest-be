@@ -194,7 +194,7 @@
             text = window.location.href.split("/");
             const tableId = text[text.length-1];
             const userId = "{{ table_order.customer.id }}";
-            const url = `/place-order/${tableId}/`;
+            const url = `/customer-login/${tableId}/`;
             window.location.href = url;
         }
 

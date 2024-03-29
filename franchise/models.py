@@ -132,7 +132,7 @@ class KitchenOrderTicket(models.Model):
             table_orders = TableOrder.objects.get(table=self.table,is_paid=False)
             
             kots = table_orders.kot.all()
-            color = "#48A14D"
+            color = "#2c6fbb"
             for kot in kots:
                 if kot.is_served == False:
                     color = "#B33F40"
@@ -170,6 +170,7 @@ class TableOrder(models.Model):
     is_paid = models.BooleanField(default=False)
     is_pending = models.BooleanField(default=False)
     payment_method = models.CharField(max_length=100,choices=(('Cash','Cash'),('Online','Online')),blank=True,null=True)
+    is_ready_pay = models.BooleanField(default=False)
     
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
@@ -182,6 +183,17 @@ class TableOrder(models.Model):
                         'type': 'update_table_color',
                         'table_id': self.table.id,
                         'table_color': "#c7c5c5",
+                    }
+                )
+        if self.is_ready_pay == True:
+            room_group_name=self.table.outlet.franchise.slug+"_"+self.table.outlet.slug
+            channel_layer = get_channel_layer()
+            async_to_sync(channel_layer.group_send)(
+                "tables_" + room_group_name,
+                    {
+                        'type': 'update_table_color',
+                        'table_id': self.table.id,
+                        'table_color': "#48A14D",
                     }
                 )
             

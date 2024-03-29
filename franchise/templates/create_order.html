@@ -90,44 +90,92 @@
 
     <button id="place-order-btn" type="submit">Place Order</button>
     
-    <script>
-        const tabMenuItems = document.querySelectorAll('.navbar ul li a');
-        const tabContents = document.querySelectorAll('.tab-content');
+<script>
+    const tabMenuItems = document.querySelectorAll('.navbar ul li a');
+    const tabContents = document.querySelectorAll('.tab-content');
 
-        tabMenuItems.forEach(item => {
-            item.addEventListener('click', function() {
-                const target = document.querySelector(this.getAttribute('href'));
-                
-                tabContents.forEach(content => {
-                    if (content === target) {
-                        content.classList.add('active');
-                    } else {
-                        content.classList.remove('active');
-                    }
-                });
-
-                tabMenuItems.forEach(menuItem => {
-                    menuItem.classList.remove('active');
-                });
-
-                this.classList.add('active');
-
-                return false;
-            });
-        });
-        const placeOrderBtn = document.getElementById('place-order-btn');
-        placeOrderBtn.addEventListener('click', function() {
-            const selectedItems = [];
-            const checkboxes = document.querySelectorAll('input[type="checkbox"]:checked');
-            checkboxes.forEach(checkbox => {
-                const itemId = checkbox.value;
-                const quantityInput = document.querySelector(`input[name="quantity_${itemId}"]`);
-                const quantity = quantityInput ? quantityInput.value : 0;
-                selectedItems.push({ itemId, quantity });
+    tabMenuItems.forEach(item => {
+        item.addEventListener('click', function() {
+            const target = document.querySelector(this.getAttribute('href'));
+            
+            tabContents.forEach(content => {
+                if (content === target) {
+                    content.classList.add('active');
+                } else {
+                    content.classList.remove('active');
+                }
             });
 
-            console.log(selectedItems);
+            tabMenuItems.forEach(menuItem => {
+                menuItem.classList.remove('active');
+            });
+
+            this.classList.add('active');
+
+            return false;
         });
-    </script>
+    });
+    
+    const placeOrderBtn = document.getElementById('place-order-btn');
+    placeOrderBtn.addEventListener('click', function() {
+        const tableId = parseInt(window.location.pathname.split('/')[2]);
+        if (isNaN(tableId)) {
+            console.error('Invalid table ID');
+            return;
+        }
+        const products = [];
+        const checkboxes = document.querySelectorAll('input[type="checkbox"]:checked');
+        checkboxes.forEach(checkbox => {
+            const itemId = checkbox.value;
+            const quantityInput = document.querySelector(`input[name="quantity_${itemId}"]`);
+            const quantity = quantityInput ? parseInt(quantityInput.value) : 0;
+            if (quantity > 0) {
+                products.push({ item: parseInt(itemId), quantity });
+            }
+        });
+
+        if (products.length === 0) {
+            console.error('No products selected');
+            return;
+        }
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const accessToken = urlParams.get('access_token');
+        console.log(accessToken);
+        if (!accessToken) {
+            console.error('Access token not found');
+            return;
+        }
+        console.log(products);
+        fetch('/order/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${accessToken}`
+            },
+            body: JSON.stringify({
+                table_id: tableId,
+                products: products
+            })
+        })
+        .then(response => {
+            if (response.ok) {
+                return response.json();
+            } else {
+                throw new Error('Failed to place order');
+            }
+        })
+        .then(data => {
+            console.log('Order placed successfully:', data);
+            // Handle success, if needed
+        })
+        .catch(error => {
+            console.error('Error placing order:', error);
+            // Handle error, if needed
+        });
+    });
+
+</script>
+
 </body>
 </html>

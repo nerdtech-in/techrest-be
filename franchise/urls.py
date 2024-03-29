@@ -1,7 +1,7 @@
 # urls.py
 
 from django.urls import path, include
-from .views import MarkOrderServedView,TableOrderAPIView,TableAPIView,CustomerAPIView,OrderAPIView,orders_view,table_view,show_table_order,CustomerFingerAPIView,PaymentAPIView,MakePaymentAPIView,QRAPIView
+from .views import *
 from .form_views import create_order,order_success
 
 urlpatterns = [
@@ -19,4 +19,6 @@ urlpatterns = [
     path('place-order/<int:table_id>/', create_order, name='place-order'),
     path('order-success/', order_success, name='order_success'),
     path('generate-qr/', QRAPIView.as_view(), name='generate_qr'),
+    path('ready-to-pay/', MakePaymentAPIView.as_view(), name='ready_to_pay'),
+    path('customer-login/<int:table_id>/', login_view, name='login'),
 ]

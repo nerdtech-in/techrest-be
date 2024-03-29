@@ -21,11 +21,10 @@ from django.shortcuts import get_object_or_404
 
 class CustomerAPIView(APIView):
     def post(self,request):
-        
         try:
             customer = Customer.objects.get(mobile_number=request.data['mobile_number'])
         except:
-            customer = Customer.objects.create(name=request.data['name'], mobile_number=request.data['mobile_number'],finger_print=request.data['finger_print'])
+            customer = Customer.objects.create(name=request.data['name'], mobile_number=request.data['mobile_number'])
         
         access_token = jwt.encode({
                 "id":customer.id,
@@ -166,7 +165,7 @@ def table_view(request, franchise, outlet):
     
     
     for table in tables:
-        color = green
+        color = blue
         if not table.is_reserved:
             color = grey
         else:
@@ -176,7 +175,7 @@ def table_view(request, franchise, outlet):
                 color = blue
             else:
                 if not table_order.kot.filter(is_served=False).exists():
-                    color = green
+                    color = blue
                 else:
                     color = red 
                 if table_order.is_paid:
@@ -322,3 +321,20 @@ class QRAPIView(APIView):
         for table in tables:
             table.generate_qr_code(link)
         return Response({'msg':"QR Changed"})
+    
+class MakePaymentAPIView(APIView):
+    def post(self,request):
+        try:
+            table_order = TableOrder.objects.get(id=request.data['table_order_id'])
+            table_order.is_ready_pay = True
+            table_order.is_paid = True
+            table_order.save()
+            table = Table.objects.get(pk=table_order.table.id)
+            table.is_reserved = False
+            table.save()
+            return Response({'msg':'Ready to Pay!'})
+        except:
+            return Response({'msg':'Internal Error Occured'})
+        
+def login_view(request,table_id):
+    return render(request=request,template_name="login.html")
