@@ -18,6 +18,17 @@ from asgiref.sync import async_to_sync
 import json
 from . import consumer_serializers
 from django.shortcuts import get_object_or_404
+from rest_framework_simplejwt.tokens import RefreshToken
+from django.contrib.auth import authenticate, login
+
+def get_tokens_for_user(user):
+    refresh = RefreshToken.for_user(user)
+
+    return {
+        'access': str(refresh.access_token),
+        'refresh': str(refresh),
+    }
+
 
 class CustomerAPIView(APIView):
     def post(self,request):
@@ -64,7 +75,20 @@ class TableAPIView(APIView):
         new_data['table_id'] = table_id
         return Response(new_data)
     
-
+class MenuAPIView(APIView):
+    def get(self, request, franchise_slug, outlet_slug):
+        try:
+            # table = Table.objects.get(id=table_id)
+            franchise = Franchise.objects.get(slug=franchise_slug)
+            outlet = Outlet.objects.get(slug=outlet_slug, franchise=franchise)
+        except (Franchise.DoesNotExist, Outlet.DoesNotExist):
+            return Response({'msg':'invalid url'})
+        
+        serializer = FranchiseSerializer(franchise)
+        new_data = serializer.data
+        # new_data['table_id'] = table_id
+        return Response(new_data)
+    
 class OrderAPIView(APIView):
     authentication_classes = [IsJWTAuthenticated]
     def post(self, request):
@@ -338,3 +362,86 @@ class MakePaymentAPIView(APIView):
         
 def login_view(request,table_id):
     return render(request=request,template_name="login.html")
+
+class TableAdminAPIView(APIView):
+    def get(self,request,franchise,outlet):
+        blue = "#2c6fbb"
+        grey = "#c7c5c5"
+        red = "#B33F40"
+        green = "#48A14D"
+
+        new = Outlet.objects.get(slug=outlet)
+        tables = Table.objects.filter(outlet=new)
+        indoor_tables = []
+        outdoor_tables = []
+        mezzanine_tables = []
+        
+        unpaid_table_orders = TableOrder.objects.filter(table__in=tables, is_paid=False)
+
+        unpaid_kots = KitchenOrderTicket.objects.filter(table__in=tables, tableorder__in=unpaid_table_orders, is_served=False)
+
+        unserved_orders = Order.objects.filter(
+            kitchenorderticket__in=unpaid_kots, is_served=False
+            ).annotate(table_number=F('kitchenorderticket__table__table_number'))
+        
+        
+        for table in tables:
+            color = blue
+            if not table.is_reserved:
+                color = grey
+            else:
+                try:
+                    table_order = TableOrder.objects.get(table=table,is_paid=False)
+                except TableOrder.DoesNotExist:
+                    color = blue
+                else:
+                    if not table_order.kot.filter(is_served=False).exists():
+                        color = blue
+                    else:
+                        color = red 
+                    if table_order.is_paid:
+                        color = grey
+                        
+            if table.category == "IN":
+                indoor_tables.append({
+                    "table_no": "IN"+str(table.table_number),
+                    "id": table.id,
+                    "table_color": color,
+                    "table_type": "Indoor"
+                })
+            elif table.category == "OU":
+                outdoor_tables.append({
+                    "table_no": "OU"+str(table.table_number),
+                    "id": table.id,
+                    "table_color": color,
+                    "table_type": "Outdoor"
+                })
+            elif table.category == "MZ":
+                mezzanine_tables.append({
+                    "table_no": "MZ"+str(table.table_number),
+                    "id": table.id,
+                    "table_color": color,
+                    "table_type": "Mezzanine"
+                })
+
+        context = {
+            "tables":[outdoor_tables,indoor_tables,mezzanine_tables],
+            "franchise":franchise, "outlet": outlet,
+            "orders":unserved_orders,
+        }
+        
+        return Response(context)
+    
+    
+class FranchiseLoginAPIView(APIView):
+    def post(self,request):
+        username = request.data.get('username')
+        password = request.data.get('password')
+        if username and password:
+            user = authenticate(username=username,password=password)
+            if user:
+                return Response(get_tokens_for_user(user))
+            else:
+                return Response({'msg':'Unauthorized Successfully'})
+        else:
+            return Response({'msg':'Details not Provided'})
