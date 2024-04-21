@@ -230,7 +230,7 @@ def table_view(request, franchise, outlet):
     context = {
         "tables":[outdoor_tables,indoor_tables,mezzanine_tables],
         "franchise":franchise, "outlet": outlet,
-        "orders":unserved_orders,
+        # "orders":unserved_orders,
     }
     return render(request, template_name="order_per_table.html", context=context)
 
