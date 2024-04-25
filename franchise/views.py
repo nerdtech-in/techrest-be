@@ -230,7 +230,7 @@ def table_view(request, franchise, outlet):
     context = {
         "tables":[outdoor_tables,indoor_tables,mezzanine_tables],
         "franchise":franchise, "outlet": outlet,
-        # "orders":unserved_orders,
+        "orders":unserved_orders,
     }
     return render(request, template_name="order_per_table.html", context=context)
 
@@ -255,11 +255,62 @@ def show_table_order(request,franchise, outlet,table_id):
                     'order_details': order_details,
                 })
                 
+            
+                
             return render(request, 'table_order.html', {'table_order': table_order, 'orders': orders,'total':total})
         else:
             return render(request, 'table_order.html', {'error': 'Table order not found or already paid.'})
     except Exception as e:
         return render(request, 'table_order.html', {'error': str(e)})
+class GetOrderAPIView(APIView):
+    def get(self,request, table_id):
+        try:
+            total = 0
+            table_order = TableOrder.objects.filter(table_id=table_id, is_paid=False).first()
+            
+            if table_order and not table_order.is_pending:
+                kots = table_order.kot.all()
+                orders = []
+                
+                for kot in kots:
+                    order_details = []
+                    
+                    for order in kot.order.all():
+                        item_price = order.item.price
+                        order_details.append({
+                            'item_name': order.item.name,
+                            'quantity': order.quantity,
+                            'price': item_price * order.quantity
+                        })
+                        total += item_price * order.quantity
+                    
+                    orders.append({
+                        'kot_id': kot.id,
+                        'order_details': order_details,
+                    })
+
+                response_data = {
+                    'table_order': {
+                        'id': table_order.id,
+                        'started_at': table_order.started_at,
+                        'completed_at': table_order.completed_at,
+                        'is_paid': table_order.is_paid,
+                        'is_pending': table_order.is_pending,
+                        'payment_method': table_order.payment_method,
+                        'is_ready_pay': table_order.is_ready_pay
+                    },
+                    'orders': orders,
+                    'total': total
+                }
+                
+                # print(response_data)
+                return Response(response_data)
+            
+            else:
+                return Response({'msg': 'Table order not found or already paid.'})
+        
+        except Exception as e:
+            return Response({'msg': str(e)})
 
 
 class MarkOrderServedView(APIView):
@@ -427,7 +478,7 @@ class TableAdminAPIView(APIView):
         context = {
             "tables":[outdoor_tables,indoor_tables,mezzanine_tables],
             "franchise":franchise, "outlet": outlet,
-            "orders":unserved_orders,
+            # "orders":unserved_orders,
         }
         
         return Response(context)

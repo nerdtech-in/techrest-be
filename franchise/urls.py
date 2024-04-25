@@ -24,4 +24,5 @@ urlpatterns = [
     path('ready-to-pay/', MakePaymentAPIView.as_view(), name='ready_to_pay'),
     path('customer-login/<int:table_id>/', login_view, name='login'),
     path('tables-view/<str:franchise>/<str:outlet>/', TableAdminAPIView.as_view(), name='table-view'),
+    path('get-table-order/<int:table_id>', GetOrderAPIView.as_view(), name='table-view'),
 ]
