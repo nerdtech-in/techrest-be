@@ -1,10 +1,9 @@
 from .import *
+from rest_framework import generics
 
 
-class SearchAPIView(APIView):
-    class ProductList(generics.ListAPIView):
+class ProductList(generics.ListAPIView):
     queryset = Product.objects.all()
-    def get(self,request):
     serializer_class = ProductSerializer
 
     def get_queryset(self):
