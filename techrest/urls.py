@@ -23,7 +23,8 @@ from django.conf.urls.static import static
 urlpatterns = [
     path('_nested_admin/', include('nested_admin.urls')),
     path('admin/', admin.site.urls),
-    path('',include('franchise.urls'))
+    path('',include('franchise.urls')),
+    path('ad/',include('franchise.admin_urls')),
 ]
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 

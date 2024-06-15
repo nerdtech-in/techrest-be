@@ -496,3 +496,4 @@ class FranchiseLoginAPIView(APIView):
                 return Response({'msg':'Unauthorized Successfully'})
         else:
             return Response({'msg':'Details not Provided'})
+        
