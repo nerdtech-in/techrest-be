@@ -234,9 +234,12 @@ def table_view(request, franchise, outlet):
     }
     return render(request, template_name="order_per_table.html", context=context)
 
-def show_table_order(request,franchise, outlet,table_id):
+from decimal import Decimal
+# from django.shortcuts import render
+
+def show_table_order(request, franchise, outlet, table_id):
     try:
-        total = 0
+        total = Decimal('0.00')
         table_order = TableOrder.objects.filter(table_id=table_id, is_paid=False).first()
         if table_order:
             kots = table_order.kot.all()
@@ -244,24 +247,27 @@ def show_table_order(request,franchise, outlet,table_id):
             for kot in kots:
                 order_details = []
                 for order in kot.order.all():
+                    item_price = Decimal(order.item.price)
+                    quantity = Decimal(order.quantity)
+                    line_total = item_price * quantity
+                    total += line_total
                     order_details.append({
                         'item_name': order.item.name,
                         'quantity': order.quantity,
-                        'price':order.item.price*order.quantity
+                        'price': float(line_total),  # Convert to float for template rendering
                     })
-                    total+=order.item.price*order.quantity
                 orders.append({
                     'kot_id': kot.id,
                     'order_details': order_details,
                 })
-                
-            
-                
-            return render(request, 'table_order.html', {'table_order': table_order, 'orders': orders,'total':total})
+            return render(request, 'table_order.html', {'table_order': table_order, 'orders': orders, 'total': float(total)})  # Convert to float for template rendering
         else:
             return render(request, 'table_order.html', {'error': 'Table order not found or already paid.'})
     except Exception as e:
         return render(request, 'table_order.html', {'error': str(e)})
+
+    
+    
 class GetOrderAPIView(APIView):
     def get(self,request, table_id):
         try:
